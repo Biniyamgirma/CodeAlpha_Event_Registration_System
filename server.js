@@ -14,11 +14,15 @@ app.use(express.urlencoded({ extended: true }));
 
 //auth router //.login //register //logout 
 // //password reset 
-app.use('/auth',null);
+app.use('/auth',require('./router/authRoute/authRoute'));
 
+//route for admin works //get admins // register organizers //get all users //get all organizers
+//verify organizers //verify users //block users //block organizers //manage admins //view profit 
+//
+app.use('/admin',require('./router/systemAdminRoute/systemAdminRoute'));
 //user management router //get users details //get user by id //update user details 
 // //delete user//search user by name //search user by email// serch user by phone number
-app.use('/api/users',null)
+app.use('/api/users',require('./router/usersRoute/usersRoute'))
 
 //organizer management router //get organizer details //get organizer by id //update organizer details
 // //delete organizer//search organizer by name// search organizer by contact number
