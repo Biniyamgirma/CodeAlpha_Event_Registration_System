@@ -95,12 +95,6 @@ const loginUser = (req,res)=>{
 
 module.exports = {
   registerUser,
-  assignAdminPrivelage,
   loginUser,
-  changePassword,
-  verifyOrganizer,
-  verifyUser,
-  blockOrganizer,
-  blockUser,
-  registerOrganizer
+  changePassword
 };

@@ -26,38 +26,38 @@ app.use('/api/users',require('./router/usersRoute/usersRoute'))
 
 //organizer management router //get organizer details //get organizer by id //update organizer details
 // //delete organizer//search organizer by name// search organizer by contact number
-app.use('/api/organizers',null);
+app.use('/api/organizers',require('./router/organizationRoute/organizationRoute'));
 
 //organizers sessions route //get session by id //create session
 // //update session //delete session //map session to event
 //map session to speaker
 /// get sessions by event id
-app.use('/api/organizers/sessions',null);
+app.use('/api/organizers/sessions',require('./router/organizationRoute/sessionManagment'));
 
 //events router //add events //get event by id //create event
 //  //update event //delete event
-app.use('/api/organizers/events',null)
+app.use('/api/organizers/events', require('./router/organizationRoute/eventManagment'));
 
 // organizers tickets route //get ticket by id //create ticket
 // //update ticket //delete ticket
 // //get tickets by event id //get tickets by organizers id
-app.use('/api/organizers/tickets',null);
+app.use('/api/organizers/tickets',require('./router/organizationRoute/ticketManagment'));
 
 //organizers discounts route //get discount by id //create discount
 // //update discount //delete discount
 // //get discounts by event id //get discounts by organizers id
-app.use('/api/organizers/discounts',null);
+app.use('/api/organizers/discounts',require('./router/organizationRoute/discountManagment'));
 
 //event for users route //get all events //get event by id 
 //get events by date //get events by location //get events by category
-app.use('/api/users/events',null);
+app.use('/api/users/events',require('./router/usersRoute/userEvent'));
 
 //event categories route //get all categories //get category by id // only for admin
 // //create category //update category //delete category
-app.use('/api/events/categories',null);
+app.use('/api/events/categories',require('./router/systemAdminRoute/categories'));
 
 //user tickets route //get all tickets //get ticket by id //get tickets by event id
-app.use('/api/users/tickets',null);
+app.use('/api/users/tickets',require('./router/usersRoute/userTicket'));
 
 // payment route //create payment //get payment by id
 // //update payment //delete payment //get payments by user id
@@ -68,13 +68,13 @@ app.use('/api/users/tickets',null);
 //total amount paid by user specific to ticket
 //total amount paid by user specific to organizer
 //total amount paid by user specific to category
-app.use('/api/payment',null);
+app.use('/api/payment',require('./router/payment/payment'));
 
 
 //registration route //register user to event
 //get registration by id //get registrations by user id
 //get registrations by event id //get registrations by organizer id
-app.use('api/registration',null);
+app.use('api/registration',require('./router/usersRoute/registration'));
 
 //notifications route //get notification by id
 //get notifications spacific to user
@@ -83,19 +83,19 @@ app.use('api/registration',null);
 //get notifications spacific to category
 //get notifications spacific to town 
 //get notifications spacific to town and category
-app.use('/api/notifications',null);
+app.use('/api/notifications',require('./router/usersRoute/notification'));
 
 //get sponsors by id // create sponsor
 //update sponsor //delete sponsor
 //get sponsors by event id
 //get sponsors by category id //get sponsors by town id
 //get sponsors by event id
-app.use('/api/sponsors',null);
+app.use('/api/sponsors',require('./router/systemAdminRoute/sponsor'));
 
 //register to a session in an event
 //get session by id
 //
-app.use('/api/users/sessions',null);
+app.use('/api/users/sessions',require('./router/usersRoute/userSessions'));
 //test router
 app.use('/test',require('./router/testRoute/testRoute'));
 

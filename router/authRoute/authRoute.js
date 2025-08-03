@@ -9,7 +9,7 @@ const {
 //user routes
 router.route('/user/register').post(registerUser);
 router.route('/user/login').post(loginUser);
-router.route('/user/logout').post();
+// router.route('/user/logout').post();
 router.route('/user/reset-password').post(changePassword);
 
 

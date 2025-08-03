@@ -291,7 +291,7 @@ CREATE TABLE payments (
 );
 
 CREATE TABLE event_sponsors (
-    sponsor_id SERIAL PRIMARY KEY,
+    sponsor_id SERIAL PRIMARY KEY ,
     event_id INTEGER NOT NULL REFERENCES events(event_id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,
     description TEXT,
