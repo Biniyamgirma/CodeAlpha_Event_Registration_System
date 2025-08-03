@@ -16,4 +16,7 @@ router.route('/verify-user').post(verifyUser)
 router.route('/block-organizer').post(blockOrganizer)
 router.route('/block-user').post(blockUser)
 
+// router.route('/search/name/:name').get();
+// router.route('/search/contact/:contact').get();
+
 module.exports = router;

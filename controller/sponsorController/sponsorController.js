@@ -15,7 +15,8 @@ const getAllSponsors = (req,res)=>{
     });
 }
 const createSponsor = (req,res)=>{
-    const {name,description,logo_url,sponsor_level,website_url,contact_email,contact_phone, event_id} = req.body;
+    const {name,description,sponsor_level,website_url,contact_email,contact_phone, event_id} = req.body;
+    const logo_url = req.file ? req.file.path : null;
     if(!name || !description || !logo_url || !sponsor_level || !website_url || !contact_email || !contact_phone || !event_id){
         return res.status(400).json({
             message: 'All fields are required'
