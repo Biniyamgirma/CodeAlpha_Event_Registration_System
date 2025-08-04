@@ -1,5 +1,4 @@
 const express = require('express');
-const { route } = require('./organizationRoute');
 const router = express.Router();
 const multer = require('multer');
 const storage = require('../../config/fileStorageEngine').constants.storage;
