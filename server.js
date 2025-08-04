@@ -56,7 +56,7 @@ app.use('/api/users/events',require('./router/usersRoute/userEvent'));
 // //create category //update category //delete category
 app.use('/api/events/categories',require('./router/systemAdminRoute/categories'));
 
-//user tickets route //get all tickets //get ticket by id //get tickets by event id
+//user tickets route //get tickets by event id //
 app.use('/api/users/tickets',require('./router/usersRoute/userTicket'));
 
 // payment route //create payment //get payment by id
