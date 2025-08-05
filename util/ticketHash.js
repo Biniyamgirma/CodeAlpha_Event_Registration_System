@@ -15,9 +15,12 @@ const generateRegistrationToken = (registration) =>{
         firstName: registration.firstName,
         lastName: registration.lastName,
         eventId: registration.eventId,
+        eventName: registration.eventName,
+        ticketId: registration.ticketId,
+        ticketName: registration.ticketName
     }
     const options = {
-        expiresIn: '2d'
+        expiresIn: '30d'
     }
     const token = jsonwebtoken.sign(playLoad, secretKey, options);
     return token;
