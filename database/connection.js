@@ -18,3 +18,4 @@ async function connection(){
         console.error('Database connection error:', error.stack);
     }
 }
+module.exports= pool;

@@ -26,7 +26,7 @@ const assignAdminPrivelage= async(req,res)=>{
         newRole: role
     });
 }
-const registerOrganizer = async(req,res)=>{
+const registerOrganizer = (req,res)=>{
     const {
     user_id,
     company_name,
@@ -40,7 +40,7 @@ const registerOrganizer = async(req,res)=>{
         })
     }
     //database insert logic
-    await pool.query('INSERT INTO event_organizers (user_id, company_name, job_title, contact_phone, company_address) VALUES ($1, $2, $3, $4, $5)', 
+     pool.query('INSERT INTO event_organizers (user_id, company_name, job_title, contact_phone, company_address) VALUES ($1, $2, $3, $4, $5)', 
     [user_id, company_name, job_title, contact_phone, company_address], (error, results) => {
         if (error) {
             return res.status(500).json({

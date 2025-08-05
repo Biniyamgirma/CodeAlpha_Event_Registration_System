@@ -1,4 +1,4 @@
-const pool = require('../../database/dbConnection');
+const pool = require('../../database/connection');
 
 const addSessionSpeaker = (req,res)=>{
     const {

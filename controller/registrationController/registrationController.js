@@ -15,56 +15,92 @@ const registrationValue = {
     notes:" ",
     payment_terms:"This invoice will expire after 2 days"
 }
-const registrations = async(req, res)=>{
+const registrations = async (req, res) => {
+    const currentDate = new Date().toISOString();
     const {
         event_id,
-    user_id,
-    ticket_id,
-    registration_date,
-    discount_code_id,
-    notes,
-    accessibility_requirements
+        user_id,
+        ticket_id,
+        registration_date,
+        discount_code_id,
+        notes,
+        accessibility_requirements
     } = req.body;
-    try {
-        const ticketData = await pool.query('SELECT price, is_active,available_until,max_available,current_available FROM tickets WHERE ticket_id = $1',[ticket_id]);
-    if(ticketData.rows.length === 0){
-        return res.status(400).json({message:'Ticket is not avalable'})
-    }
-    if(ticketData.rows[0].is_active === false){
-        return res.status(400).json({message:'Ticket is not avalable'})
-    }else if(ticketData.rows[0].available_until < currentDate){
-        return res.status(400).json({message:'Ticket is not avalable'})
-    }else if(ticketData.rows[0].max_available < ticketData.rows[0].current_available){
-        return res.status(400).json({message:'No ticket available'})
-    }
 
-    if(!discount_code_id){
-        registrationValue.discount_amount = 0;
-    }else{
-        const  discountData = await pool.query('SELECT * FROM discount_codes WHERE discount_code_id = $1',[discount_code_id]);
-        if(discountData.rows.length === 0){
-          return  res.status(400).json({message:'Discount code is not avalable'})
+    try {
+        // Validate ticket exists and is available
+        const ticketQuery = 'SELECT price, is_active, available_until, max_available, current_available FROM tickets WHERE ticket_id = $1';
+        const ticketData = await pool.query(ticketQuery, [ticket_id]);
+        
+        if (ticketData.rows.length === 0) {
+            return res.status(400).json({ message: 'Ticket not found' });
         }
-        if(discountData.rows[0].is_active === false && discountData.rows[0].end_date < currentDate && discountData.rows[0].start_date > currentDate && discountData.rows[0].max_uses >= discountData.rows[0].current_uses){
-            return res.status(400).json({message:'Discount code currently unavalabel'})
+
+        const ticket = ticketData.rows[0];
+        
+        if (!ticket.is_active) {
+            return res.status(400).json({ message: 'Ticket is not active' });
         }
-    }
-    if(ticketData.rows[0].price === 0){// pice is zero or the event is for free
-        const freeTicket = {
-    event_id:event_id,
-    user_id:user_id,
-    ticket_id:ticket_id,
-    registration_date:registration_date,
-    status:'paid',
-    payment_status:'completed',
-    discount_code_id:null,
-    notes:null,
-    checked_in_at:currentDate,
-    accessibility_requirements:null,
-    ticket_qr_code:""
-        };
-        await pool.query('INSERT INTO registrations (event_id,user_id,ticket_id,registration_date,status,payment_status,discount_code_id,notes,checked_in_at,accessibility_requirements,ticket_qr_code) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *',
-            [
+        
+        if (new Date(ticket.available_until) < new Date()) {
+            return res.status(400).json({ message: 'Ticket has expired' });
+        }
+        
+        if (ticket.current_available > ticket.max_available) {
+            return res.status(400).json({ message: 'No tickets available' });
+        }
+
+        // Handle discount code if provided
+        let discountAmount = 0;
+        let discountData = null;
+        
+        if (discount_code_id) {
+            const discountQuery = 'SELECT * FROM discount_codes WHERE discount_code_id = $1';
+            discountData = await pool.query(discountQuery, [discount_code_id]);
+            
+            if (discountData.rows.length === 0) {
+                return res.status(400).json({ message: 'Discount code not found' });
+            }
+            
+            const discount = discountData.rows[0];
+            const now = new Date();
+            const startDate = new Date(discount.start_date);
+            const endDate = new Date(discount.end_date);
+            
+            if (!discount.is_active || now < startDate || now > endDate || discount.current_uses >= discount.max_uses) {
+                return res.status(400).json({ message: 'Discount code not available' });
+            }
+            
+            // Calculate discount amount (implement your discount calculation logic)
+            discountAmount = calculateDiscount(discount.discount_value, ticket.price);
+        }
+
+        // Handle free tickets
+        if (ticket.price === 0) {
+            const freeTicket = {
+                event_id,
+                user_id,
+                ticket_id,
+                registration_date: registration_date || currentDate,
+                status: 'paid',
+                payment_status: 'completed',
+                discount_code_id: discount_code_id || null,
+                notes: notes || null,
+                checked_in_at: null,
+                accessibility_requirements: accessibility_requirements || null,
+                ticket_qr_code: generateQRCode() // Implement your QR code generation
+            };
+
+            const insertQuery = `
+                INSERT INTO registrations (
+                    event_id, user_id, ticket_id, registration_date, 
+                    status, payment_status, discount_code_id, notes, 
+                    checked_in_at, accessibility_requirements, ticket_qr_code
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) 
+                RETURNING *
+            `;
+            
+            const result = await pool.query(insertQuery, [
                 freeTicket.event_id,
                 freeTicket.user_id,
                 freeTicket.ticket_id,
@@ -76,58 +112,107 @@ const registrations = async(req, res)=>{
                 freeTicket.checked_in_at,
                 freeTicket.accessibility_requirements,
                 freeTicket.ticket_qr_code
-            ],(error,results)=>{
-                if(error){
-                    return res.status(400).json({error:error.message})
-                }
-                res.status(200).json({message:"you Havebeen Registered Successfully"})
-            })
-    }
-    else{
-        const payment = true;
-         await  pool.query('INSERT INTO registrations (event_id,user_id,ticket_id,registration_date,status,discount_code_id,notes,accessibility_requirements) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *',
-        [
+            ]);
+
+            return res.status(201).json({ 
+                message: "Registration successful",
+                registration: result.rows[0]
+            });
+        }
+
+        // Handle paid tickets
+        const registration = {
             event_id,
             user_id,
             ticket_id,
-            registration_date,
-            status,
-            discount_code_id,
-            notes,
-            accessibility_requirements
-        ],(error,results)=>{
-            if(error){
-                res.status(400).json({error:error.message})
-            }
-             registrationValue.registration_id = results.row[0].registration_id;
-            registrationValue.invoice_number =  `INV-${registrationId}`;
-            registrationValue.discount_amount = discountAmount(discountData.rows[0].discount_value,ticketData.rows[0].price);
-            registrationValue.tax_amount = calculateTax(registrationValue.tax_amount,registrationValue.total_amount);
-            registrationValue.total_amount = ticketData.rows[0].price - registrationValue.discount_amount + registrationValue.tax_amount;
+            registration_date: registration_date || currentDate,
+            status: 'pending',
+            discount_code_id: discount_code_id || null,
+            notes: notes || null,
+            accessibility_requirements: accessibility_requirements || null
+        };
 
-            pool.query(`INSERT INTO invoices (registration_id,invoice_number,due_date,total_amount,tax_amount,discount_amount,notes,payment_terms) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
-            [
-               registrationValue.registration_id,
-               registrationValue.invoice_number,
-               registrationValue.due_date,
-               registrationValue.total_amount,
-               registrationValue.tax_amount,
-               registrationValue.discount_amount,
-               registrationValue.notes,
-               registrationValue.payment_terms
-                
-            ],(error,results)=>{
-                if(error){
-                    res.status(400).json({error:error.message})
-                }
-                return res.status(200).json({message:"you Havebeen Registered Successfully"})
-            }
-            );
+        // Start transaction for paid tickets
+        const client = await pool.connect();
+        
+        try {
+            await client.query('BEGIN');
+
+            // Insert registration
+            const regQuery = `
+                INSERT INTO registrations (
+                    event_id, user_id, ticket_id, registration_date, 
+                    status, discount_code_id, notes, accessibility_requirements
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
+                RETURNING registration_id
+            `;
+            
+            const regResult = await client.query(regQuery, [
+                registration.event_id,
+                registration.user_id,
+                registration.ticket_id,
+                registration.registration_date,
+                registration.status,
+                registration.discount_code_id,
+                registration.notes,
+                registration.accessibility_requirements
+            ]);
+
+            const registrationId = regResult.rows[0].registration_id;
+
+            // Calculate amounts
+            const taxAmount = calculateTax(ticket.price - discountAmount); // Implement your tax calculation
+            const totalAmount = ticket.price - discountAmount + taxAmount;
+
+            // Insert invoice
+            const invoiceQuery = `
+                INSERT INTO invoices (
+                    registration_id, invoice_number, due_date, 
+                    total_amount, tax_amount, discount_amount, 
+                    notes, payment_terms
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
+                RETURNING *
+            `;
+            
+            const dueDate = new Date();
+            dueDate.setDate(dueDate.getDate() + 7); // 7 days from now
+            
+            await client.query(invoiceQuery, [
+                registrationId,
+                `INV-${registrationId}`,
+                dueDate.toISOString(),
+                totalAmount,
+                taxAmount,
+                discountAmount,
+                notes || null,
+                'Payment due within 7 days'
+            ]);
+
+            await client.query('COMMIT');
+            
+            return res.status(201).json({ 
+                message: "Registration successful. Payment required.",
+                registration_id: registrationId
+            });
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
         }
-    );
+    } catch (error) {
+        console.error('Registration error:', error);
+        return res.status(500).json({ 
+            message: 'Registration failed',
+            error: error.message 
+        });
     }
-    }catch (error) {
-       return res.status(400).json({message:'server error'})
-    }
- 
+};
+
+function generateQRCode() {
+    // Implement your QR code generation logic
+    return "qr-code-data";
+}
+module.exports = {
+    registrations
 }

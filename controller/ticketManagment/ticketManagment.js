@@ -14,7 +14,7 @@ const addTicket = (req, res) => {
     includes_dinner,
     includes_materials,
     seat_no } = req.body;
-    if(!event_id || !name || !description || !price || !available_from || !available_until || !max_available || !current_available || !seat_no){
+    if(!event_id || !name || !description|| !available_from || !available_until || !max_available || !current_available || !seat_no){
         return res.status(400).json({ error: 'All fields are required' });
     }
     pool.query(`INSERT INTO tickets (event_id, name, description, price, available_from,available_until,max_available,current_available,includes_lunch,includes_dinner,includes_materials,seat_no) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`, [event_id, name, description, price, available_from ,available_until,max_available,current_available,includes_lunch,includes_dinner,includes_materials,seat_no], (error, results) => {

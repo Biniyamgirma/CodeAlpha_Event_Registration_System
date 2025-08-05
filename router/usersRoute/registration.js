@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
-
-router.route('/register').post();
-router.route('/paymentConfermed/:registrationId').put()
+const {
+    registrations
+} = require('../../controller/registrationController/registrationController')
+router.route('/register').post(registrations);
+// router.route('/paymentConfirmed/:registrationId').put()
 module.exports = router;

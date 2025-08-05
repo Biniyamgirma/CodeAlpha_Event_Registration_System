@@ -1,5 +1,4 @@
 const router = require('express').Router();
-const { registerUser } = require('../../controller/usersController/usersController');
 const {
     registerUser,
   loginUser,

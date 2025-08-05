@@ -2,6 +2,7 @@ const express = require('express');
 require('dotenv').config();
 // basic import 
 const app = express();
+const bodyParser = require('body-parser');
 
 //constants
 const port_number = process.env.PORT || 3000;
@@ -10,6 +11,7 @@ const port_number = process.env.PORT || 3000;
 // middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 //users router
 
 //auth router //.login //register //logout 
@@ -74,7 +76,7 @@ app.use('/api/payment',require('./router/payment/payment'));
 //registration route //register user to event
 //get registration by id //get registrations by user id
 //get registrations by event id //get registrations by organizer id
-app.use('api/registration',require('./router/usersRoute/registration'));
+app.use('/api/registration',require('./router/usersRoute/registration'));
 
 //notifications route //get notification by id
 //get notifications spacific to user

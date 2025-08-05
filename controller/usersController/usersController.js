@@ -17,18 +17,18 @@ const registerUser = async(req,res) => {
     first_name,
     last_name,
     phone,
-    profile_image_url,
-    bio,
-    last_login,
+    bio
     } = req.body;
     if(!email || !password_hash || !first_name || !last_name || !phone){
         return res.status(400).json({error:'All fields are required'});
     }
-    const hashedPassword = await hashPassword(profile_image_url);
-
+    const profile_image_url = req.file ? req.file.filename : null;
+    
+    const hashedPassword = await hashPassword(password_hash);
+    last_login = new Date();
     try{
-        const newUser = await pool.query(`INSERT INTO users(email,password_hash,first_name,last_name,phone,profile_image_url,bio,last_login,role) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
-            [email,hashedPassword,first_name,last_name,phone,profile_image,bio,last_login,role],(err,results)=>{
+        const newUser = pool.query(`INSERT INTO users(email,password_hash,first_name,last_name,phone,profile_image_url,bio,last_login) VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+            [email,hashedPassword,first_name,last_name,phone,profile_image_url,bio,last_login],(err,results)=>{
                 if(err){
                     res.status(400).json({
                         error:err
@@ -96,48 +96,84 @@ const changePassword = (req,res)=>{
 //@desc for sending jwt token users to login 
 //route post /api/user/login
 //access public for know
-const loginUser = async(req,res)=>{
-    const { email, password} = req.body;
-    if(!email || !password){
-        res.status(400).json({
-            message:"Email and password is required"
-        })
+const loginUser = async (req, res) => {
+    const { email, password } = req.body;
+    
+    if (!email || !password) {
+        return res.status(400).json({
+            message: "Email and password are required"
+        });
     }
-    try {
-        const data = await pool.query(`SELECT * FROM users WHERE email = $1`,[email]);
-        if(!data){
-            res.status(400).json({
-                message:"Email does't exsist"
-            })
-        }
-        const isMatch = comparePassword(password,data.password_hash);
 
-        if(!isMatch){
-            res.status(301).json({
-                message:'Password incorrect'
-            })
+    try {
+        // 1. Await the database query
+        const { rows } = await pool.query(`SELECT * FROM users WHERE email = $1`, [email]);
+        
+        // 2. Check if user exists (rows[0] contains the user)
+        if (rows.length === 0) {
+            return res.status(404).json({
+                message: "Email doesn't exist"
+            });
         }
+
+        const user = rows[0];
+        
+        // 3. Check if password_hash exists
+        if (!user.password_hash) {
+            return res.status(400).json({
+                message: "No password set for this user"
+            });
+        }
+
+        // 4. Compare passwords
+        const isMatch = await comparePassword(password, user.password_hash);
+
+        if (!isMatch) {
+            return res.status(401).json({ // 401 is more appropriate for auth failures
+                message: 'Password incorrect'
+            });
+        }
+
+        // 5. Generate token
         const userData = {
-            id:data.id,
-            email:data.email,
-            role:data.role
+            id: user.id,
+            email: user.email,
+            role: user.role
         };
         const token = generateToken(userData);
-
+        const lastLogin = new Date();
+        if(user.is_active === false){
+            return res.status(401).json({message:'you havebeen blocked from the system'});
+        }
+        await pool.query('UPDATE last_login=$1 FROM users WHERE user_id=$2',[lastLogin,user.user_id],(error,results)=>{
+            
+            const userData = {
+            user_id:user.user_id,
+            email:user.email,
+            first_name:user.first_name,
+            last_name:user.last_name,
+            phone:user.phone,
+            profile_image_url:user.profile_image_url,
+            bio:user.bio,
+            is_verified:user.is_verified,
+            role:user.role
+        }
         res.status(200).json({
-            message:"User login succsusfuly",
-            token:token,
-            userData:data.rows[0]
-        })
+            message: "User logged in successfully",
+            token: token,
+            userData: userData 
+        });
+        });
+        
         
     } catch (error) {
-        res.status(400).json({
-            message:'error in login',
-            error:error
-        })
+        console.error("Login error:", error);
+        res.status(500).json({
+            message: 'Error in login',
+            error: error.message 
+        });
     }
 }
-
 const deleteAccount = async(req,res)=>{
     const {id} = req.params;    
     try {

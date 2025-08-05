@@ -20,8 +20,8 @@ const addEvent = (req, res) => {
     registration_start,
     registration_end
     } = req.body;
-    const eventImage = req.file ? req.file.path : null;
-    const query = `INSERT INTO events (organizer_id, title, description, start_datetime, end_datetime, location, venue_name, address, city, state, country, google_map_link, is_online, online_event_url, event_image_url, max_attendees, registration_start, registration_end) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    const eventImage = req.file ? req.file.name : null;
+    const query = `INSERT INTO events (organizer_id, title, description, start_datetime, end_datetime, location, venue_name, address, city, state, country, google_map_link, is_online, online_event_url, event_image_url, max_attendees, registration_start, registration_end) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)`;
     const values = [
         organizer_id,
         title,
@@ -55,8 +55,8 @@ const addEvent = (req, res) => {
 };
 const getEventById = (req, res) => {
     const eventId = req.params.eventId;
-    const query = 'SELECT * FROM events WHERE event_id = ?';
-    pool.query(query, [eventId], (error, results) => {
+    const query = 'SELECT * FROM events WHERE event_id = $1';
+  pool.query(query, [eventId], (error, results) => {
         if (error) {
             console.error('Error fetching event:', error);
             return res.status(500).json({ error: 'Database error' });
@@ -64,12 +64,12 @@ const getEventById = (req, res) => {
         if (results.length === 0) {
             return res.status(404).json({ error: 'Event not found' });
         }
-        res.json(results[0]);
+        res.json(results.rows[0]);
     });
 };
 const getEventsByOrganizerId = (req, res) => {
     const organizerId = req.params.organizerId;
-    const query = 'SELECT * FROM events WHERE organizer_id = ?';
+    const query = 'SELECT * FROM events WHERE organizer_id = $1';
     pool.query(query, [organizerId], (error, results) => {
         if (error) {
             console.error('Error fetching events:', error);
@@ -100,7 +100,7 @@ const updateEvent = (req, res) => {
     registration_end
     } = req.body;
     const eventImage = req.file ? req.file.path : null;
-    const query = `UPDATE events SET organizer_id = ?, title = ?, description = ?, start_datetime = ?, end_datetime = ?, location = ?, venue_name = ?, address = ?, city = ?, state = ?, country = ?, google_map_link = ?, is_online = ?, online_event_url = ?, event_image_url = ?, max_attendees = ?, registration_start = ?, registration_end = ? WHERE event_id = ?`;
+    const query = `UPDATE events SET organizer_id = $1, title = $2, description = $3, start_datetime = $4, end_datetime = $5, location = $6, venue_name = $7, address = $8, city = $9, state = $10, country = $11, google_map_link = $12, is_online = $13, online_event_url = $14, event_image_url = $15, max_attendees = $16, registration_start = $17, registration_end = $18 WHERE event_id = $19`;
     const values = [
         organizer_id,
         title,
@@ -135,7 +135,7 @@ const updateEvent = (req, res) => {
 };
 const deleteEvent = (req, res) => {
     const eventId = req.params.eventId;
-    const query = 'UPDATE events SET is_active = false WHERE id = ? ';
+    const query = 'UPDATE events SET is_active = false WHERE id = $1 ';
     pool.query(query, [eventId], (error, results) => {
         if (error) {
             console.error('Error deleting event:', error);
