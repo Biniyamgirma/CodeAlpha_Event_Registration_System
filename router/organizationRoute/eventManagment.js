@@ -19,4 +19,5 @@ router.route('/:organizerId').get(rbacMiddleware(1), getEventsByOrganizerId);
 router.route('/:eventId').put(upload.single('eventImage'),rbacMiddleware(1), updateEvent);
 router.route('/:eventId').delete(rbacMiddleware(1),deleteEvent);
 
+
 module.exports = router;

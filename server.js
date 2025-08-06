@@ -78,13 +78,7 @@ app.use('/api/payment',require('./router/payment/payment'));
 //get registrations by event id //get registrations by organizer id
 app.use('/api/registration',require('./router/usersRoute/registration'));
 
-//notifications route //get notification by id
-//get notifications spacific to user
-//get notifications spacific to event
-//get notifications spacific to organizer
-//get notifications spacific to category
-//get notifications spacific to town 
-//get notifications spacific to town and category
+
 app.use('/api/notifications',require('./router/usersRoute/notification'));
 
 //get sponsors by id // create sponsor

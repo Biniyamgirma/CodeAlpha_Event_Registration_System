@@ -1,6 +1,6 @@
 const {verifyToken}= require('../../util/jwtUtils')
 
-// Define your role hierarchy (roles with higher indexes have more privileges)
+//  role hierarchy (roles with higher indexes have more privileges)
 const roleHierarchy = {
   'User': 1,
   'Organizer': 2,
@@ -10,7 +10,6 @@ const roleHierarchy = {
 const rbacMiddleware = (requiredRole) => {
   return async (req, res, next) => {
     try {
-      // 1. Get token from Authorization header
       const token = req.header('Authorization')?.replace('Bearer ', '');
       
       if (!token) {
@@ -20,7 +19,6 @@ const rbacMiddleware = (requiredRole) => {
         });
       }
 
-      // 2. Verify token
       const decoded = verifyToken(token);
       
       if(decoded.role == null){
@@ -29,7 +27,6 @@ const rbacMiddleware = (requiredRole) => {
         decoded.role = decoded.role.parseInt();
       }
       req.user = decoded;
-      // 3. Check if user has the required role or higher
       if (roleHierarchy[decoded.role] < roleHierarchy[requiredRole]) {
         return res.status(403).json({
           success: false,
@@ -37,7 +34,6 @@ const rbacMiddleware = (requiredRole) => {
         });
       }
 
-      // 4. If all checks pass, proceed to the route handler
       next();
     } catch (error) {
       console.error('RBAC Middleware Error:', error);

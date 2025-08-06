@@ -20,7 +20,7 @@ const addEvent = (req, res) => {
     registration_start,
     registration_end
     } = req.body;
-    const eventImage = req.file ? req.file.name : null;
+    const event_image_url = req.file ? req.file.name : null;
     const query = `INSERT INTO events (organizer_id, title, description, start_datetime, end_datetime, location, venue_name, address, city, state, country, google_map_link, is_online, online_event_url, event_image_url, max_attendees, registration_start, registration_end) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)`;
     const values = [
         organizer_id,
@@ -37,7 +37,7 @@ const addEvent = (req, res) => {
         google_map_link,
         is_online,
         online_event_url,
-        eventImage,
+        event_image_url,
         max_attendees,
         registration_start,
         registration_end
@@ -48,7 +48,7 @@ const addEvent = (req, res) => {
             return res.status(500).json({ error: 'Database error' });
         }
         const eventId = results.insertId;
-        res.status(201).json({ message: 'Event added successfully', eventId });
+        res.status(201).json({ message: 'Event added successfully', eventId:eventId });
     }
     );
     

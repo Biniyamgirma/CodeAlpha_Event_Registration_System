@@ -1,4 +1,3 @@
--- Drop existing types if they exist
 DROP TYPE IF EXISTS registration_status CASCADE;
 DROP TYPE IF EXISTS session_type CASCADE;
 DROP TYPE IF EXISTS invoice_status CASCADE;
@@ -8,7 +7,6 @@ DROP TYPE IF EXISTS sponsor_level CASCADE;
 DROP TYPE IF EXISTS notification_type CASCADE;
 DROP TYPE IF EXISTS email_status CASCADE;
 
--- Create ENUM types
 CREATE TYPE registration_status AS ENUM (
     'pending',
     'confirmed',
@@ -77,7 +75,6 @@ CREATE TYPE email_status AS ENUM (
     'failed'
 );
 
--- Create tables
 CREATE TABLE users (
     user_id SERIAL PRIMARY KEY,
     email VARCHAR(255) NOT NULL UNIQUE,
@@ -348,7 +345,6 @@ CREATE TABLE sent_emails (
     user_id INTEGER REFERENCES users(user_id) ON DELETE SET NULL
 );
 
--- Create indexes for performance
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_name ON users(last_name, first_name);
 CREATE INDEX idx_events_organizer ON events(organizer_id);
@@ -365,7 +361,6 @@ CREATE INDEX idx_tickets_event ON tickets(event_id);
 CREATE INDEX idx_invoices_registration ON invoices(registration_id);
 CREATE INDEX idx_invoices_status ON invoices(status);
 
--- Create function to update timestamps
 CREATE OR REPLACE FUNCTION update_modified_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -374,7 +369,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Create a function triggers for updated_at fields
 CREATE TRIGGER update_users_modified
 BEFORE UPDATE ON users
 FOR EACH ROW EXECUTE FUNCTION update_modified_column();

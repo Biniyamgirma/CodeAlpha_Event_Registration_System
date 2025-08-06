@@ -1,0 +1,725 @@
+openapi: 3.0.0
+info:
+  title: Event Registration API
+  version: 1.0.0
+  description: API for managing events, users, organizers, and registrations.
+
+servers:
+  - url: http://localhost:3030/  
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    User: 
+      type: object
+      properties:
+        id:
+          type: integer
+          description: User ID
+        first Name:
+          type: string
+          description: users first name
+        last name:
+          type: string
+          description: users first name
+        email:
+          type: string
+          description: Email address
+        
+
+    Event: 
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Event ID
+        name:
+          type: string
+          description: Event Name
+        description:
+          type: string
+          description: Event Description
+        date:
+          type: string
+          format: date
+          description: Event Date
+        location:
+          type: string
+          description: Event Location
+        capacity:
+          type: integer
+          description: Maximum number of attendees
+        // Add other event properties
+
+paths:
+  /auth/signup:
+    post:
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: User's username
+                password:
+                  type: string
+                  description: User's password
+      responses:
+        '200':
+          description: Successful registration
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: JWT token for the new user
+        '400':
+          description: Bad request (e.g., missing fields, invalid input)
+
+  /auth/signin:
+    post:
+      summary: Authenticate an existing user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: User's username
+                password:
+                  type: string
+                  description: User's password
+      responses:
+        '200':
+          description: Successful authentication
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: JWT token for the authenticated user
+        '401':
+          description: Unauthorized (invalid credentials)
+
+  /api/users:
+    get:
+      summary: Get all users (Admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+
+  /api/users/{userId}:
+    get:
+      summary: Get user by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: integer
+          description: The ID of the user to retrieve
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                : '#/components/schemas/User'
+        '404':
+          description: User not found
+
+  /api/organizers:
+    get:
+      summary: Get all organizers (Admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  # Add a schema for Organizer if you have one
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      description: Organizer ID
+                    name:
+                      type: string
+                      description: Organizer Name
+    #add post
+    post:
+      summary: Create a new organizer (Admin only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Organizer Name
+                email:
+                  type: string
+                  description: Organizer Email
+
+      responses:
+        '201':
+          description: Organizer created successfully
+        '400':
+          description: Bad request
+  /api/organizers/{organizerId}:
+    get:
+      summary: Get organizer by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: organizerId
+          required: true
+          schema:
+            type: integer
+          description: The ID of the organizer to retrieve
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                # Add a schema for Organizer if you have one
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    description: Organizer ID
+                  name:
+                    type: string
+                    description: Organizer Name
+    put:
+      summary: Update an organizer (Admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: organizerId
+          required: true
+          schema:
+            type: integer
+          description: The ID of the organizer to update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Organizer Name
+                email:
+                  type: string
+                  description: Organizer Email
+
+      responses:
+        '200':
+          description: Organizer updated successfully
+        '400':
+          description: Bad request
+        '404':
+          description: Organizer not found
+
+    delete:
+      summary: Delete an organizer (Admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: organizerId
+          required: true
+          schema:
+            type: integer
+          description: The ID of the organizer to delete
+      responses:
+        '204':
+          description: Organizer deleted successfully (no content)
+        '404':
+          description: Organizer not found
+
+  /api/organizers/sessions:
+    post:
+      summary: Create a new session
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                eventId:
+                  type: integer
+                  description: Event ID
+                name:
+                  type: string
+                  description: Session Name
+                description:
+                  type: string
+                  description: Session Description
+                startTime:
+                  type: string
+                  format: date-time
+                  description: Session Start Time
+                endTime:
+                  type: string
+                  format: date-time
+                  description: Session End Time
+      responses:
+        '201':
+          description: Session created successfully
+        '400':
+          description: Bad request
+  /api/organizers/sessions/{sessionId}:
+    get:
+      summary: Get session by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: sessionId
+          required: true
+          schema:
+            type: integer
+          description: The ID of the session to retrieve
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    description: Session ID
+                  eventId:
+                    type: integer
+                    description: Event ID
+                  name:
+                    type: string
+                    description: Session Name
+
+  /api/organizers/events:
+    post:
+      summary: Create a new event
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              : '#/components/schemas/Event'
+      responses:
+        '201':
+          description: Event created successfully
+        '400':
+          description: Bad request
+  /api/organizers/events/{eventId}:
+    get:
+      summary: Get event by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema:
+            type: integer
+          description: The ID of the event to retrieve
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                : '#/components/schemas/Event'
+        '404':
+          description: Event not found
+
+  /api/organizers/tickets:
+    post:
+      summary: Create a new ticket
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                eventId:
+                  type: integer
+                  description: Event ID
+                name:
+                  type: string
+                  description: Ticket Name
+                price:
+                  type: number
+                  format: float
+                  description: Ticket Price
+                quantity:
+                  type: integer
+                  description: Number of tickets available
+      responses:
+        '201':
+          description: Ticket created successfully
+        '400':
+          description: Bad request
+  /api/organizers/tickets/{ticketId}:
+    get:
+      summary: Get ticket by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: ticketId
+          required: true
+          schema:
+            type: integer
+          description: The ID of the ticket to retrieve
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    description: Ticket ID
+                  eventId:
+                    type: integer
+                    description: Event ID
+                  name:
+                    type: string
+                    description: Ticket Name
+                  price:
+                    type: number
+                    format: float
+                    description: Ticket Price
+
+  /api/organizers/discounts:
+    post:
+      summary: Create a new discount
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                eventId:
+                  type: integer
+                  description: Event ID
+                code:
+                  type: string
+                  description: Discount Code
+                percentage:
+                  type: number
+                  format: float
+                  description: Discount Percentage
+      responses:
+        '201':
+          description: Discount created successfully
+        '400':
+          description: Bad request
+
+  /api/organizers/discounts/{discountId}:
+    get:
+      summary: Get discount by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: discountId
+          required: true
+          schema:
+            type: integer
+          description: The ID of the discount to retrieve
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    description: Discount ID
+                  eventId:
+                    type: integer
+                    description: Event ID
+                  code:
+                    type: string
+                    description: Discount Code
+                  percentage:
+                    type: number
+                    format: float
+                    description: Discount Percentage
+
+  /api/users/events:
+    get:
+      summary: Get all events for users
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  : '#/components/schemas/Event'
+
+  /api/users/events/{eventId}:
+    get:
+      summary: Get event by ID for users
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema:
+            type: integer
+          description: The ID of the event to retrieve
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                : '#/components/schemas/Event'
+        '404':
+          description: Event not found
+
+  /api/events/categories:
+    get:
+      summary: Get all event categories (Admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      description: Category ID
+                    name:
+                      type: string
+                      description: Category Name
+
+  /api/events/categories/{categoryId}:
+    get:
+      summary: Get event category by ID (Admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: categoryId
+          required: true
+          schema:
+            type: integer
+          description: The ID of the category to retrieve
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    description: Category ID
+                  name:
+                    type: string
+                    description: Category Name
+
+  /api/users/tickets:
+    get:
+      summary: Get tickets by event ID for users
+      parameters:
+        - in: query
+          name: eventId
+          schema:
+            type: integer
+          description: The ID of the event to retrieve tickets for
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      description: Ticket ID
+                    eventId:
+                      type: integer
+                      description: Event ID
+                    name:
+                      type: string
+                      description: Ticket Name
+                    price:
+                      type: number
+                      format: float
+                      description: Ticket Price
+
+  /api/payment:
+    post:
+      summary: Create a new payment
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: integer
+                  description: User ID
+                eventId:
+                  type: integer
+                  description: Event ID
+                ticketId:
+                  type: integer
+                  description: Ticket ID
+                amount:
+                  type: number
+                  format: float
+                  description: Payment Amount
+      responses:
+        '201':
+          description: Payment created successfully
+        '400':
+          description: Bad request
+
+  /api/payment/{paymentId}:
+    get:
+      summary: Get payment by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: paymentId
+          required: true
+          schema:
+            type: integer
+          description: The ID of the payment to retrieve
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    description: Payment ID
+                  userId:
+                    type: integer
+                    description: User ID
+                  eventId:
+                    type: integer
+                    description: Event ID
+                  ticketId:
+                    type: integer
+                    description: Ticket ID
+                  amount:
+                    type: number
+                    format: float
+                    description: Payment Amount
+
+  /api/registration:
+    post:
+      summary: Register user to event
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: integer
+                  description: User ID
+                eventId:
+                  type: integer
+                  description: Event ID
+      responses:
+        '200':
+          description: User registration successful
+        '400':
+          description: Bad request
+
+  /api/registration/{registrationId}:
+    get:
+      summary: Get registration by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: registrationId
+          required:
+
+Gemini Code Assist supports plain-text files. Other file types, like PDFs and images, are not directly supported at this time. If a version of the file is available in a plain text format, please use that instead, or copy the relevant contents from the file into your prompt.
